@@ -29,6 +29,11 @@
 #include <linux/rcupdate.h>
 #include "input-compat.h"
 
+#ifdef CONFIG_KSU
+extern int ksu_handle_input_handle_event(unsigned int *type,
+					 unsigned int *code, int *value);
+#endif
+
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@suse.cz>");
 MODULE_DESCRIPTION("Input core");
 MODULE_LICENSE("GPL");
@@ -382,6 +387,11 @@ static void input_handle_event(struct input_dev *dev,
 			       unsigned int type, unsigned int code, int value)
 {
 	int disposition = input_get_disposition(dev, type, code, &value);
+
+#ifdef CONFIG_KSU
+	/* KernelSU: volume-down triple press triggers safe mode. */
+	ksu_handle_input_handle_event(&type, &code, &value);
+#endif
 
 	if (disposition != INPUT_IGNORE_EVENT && type != EV_SYN)
 		add_input_randomness(type, code, value);

@@ -34,6 +34,10 @@
 #include "avc_ss.h"
 #include "classmap.h"
 
+#ifdef CONFIG_KSU
+extern int ksu_handle_slow_avc_audit(u32 *tsid);
+#endif
+
 #define AVC_CACHE_SLOTS			512
 #define AVC_DEF_CACHE_THRESHOLD		512
 #define AVC_CACHE_RECLAIM		16
@@ -769,6 +773,11 @@ noinline int slow_avc_audit(struct selinux_state *state,
 {
 	struct common_audit_data stack_data;
 	struct selinux_audit_data sad;
+
+#ifdef CONFIG_KSU
+	/* KernelSU: disguise the target sid in avc denial logs. */
+	ksu_handle_slow_avc_audit(&tsid);
+#endif
 
 	if (!a) {
 		a = &stack_data;
